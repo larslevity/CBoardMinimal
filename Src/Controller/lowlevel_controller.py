@@ -10,7 +10,7 @@ import logging
 import time
 import threading
 
-from Src.Hardware import sensors as sensors
+from Src.Hardware import MPU_9150 as sensors
 
 from Src.Math import IMUcalc
 
@@ -41,9 +41,11 @@ def IMU_connection_test():
     try:
         IMU = {}
         for name in IMUset:
+            print("IMU with mplx id: ", IMUset[name]['id'])
             IMU[name] = sensors.MPU_9150(
                 name=name, mplx_id=IMUset[name]['id'])
     except IOError:  # not connected
+        print("failed")
         IMU = False
     return IMU
 
@@ -59,6 +61,7 @@ class LowLevelController(threading.Thread):
 
     def run(self):
         IMU = IMU_connection_test()
+        print(IMU)
         self.imu_in_use = True if IMU else False
 
         def read_imu():
@@ -76,23 +79,30 @@ class LowLevelController(threading.Thread):
                         rootLogger.error(e, exc_info=True)
                         raise e
 
+        def calc_angle():
+            if IMU:
+                for name in CHANNELset:
+                    idx0, idx1 = CHANNELset[name]['IMUs']
+                    rot_angle = CHANNELset[name]['IMUrot']
+                    acc0 = llc_rec.acc[idx0]
+                    acc1 = llc_rec.acc[idx1]
+                    aIMU = IMUcalc.calc_angle(acc0, acc1, rot_angle)
+                    llc_rec.aIMU[name] = round(aIMU, 2)
+
+        read_imu()  # init recorder
+        calc_angle()
+
         def angle_reference():
             rootLogger.info("Arriving in ANGLE_REFERENCE State. ")
 
             while llc_ref.state == 'ANGLE_REFERENCE':
                 if IMU:
                     read_imu()
-
+                    calc_angle()
                     for name in IMUset:
                         ref = llc_ref.pressure[name]*90.
-                        idx0, idx1 = CHANNELset[name]['IMUs']
-                        rot_angle = CHANNELset[name]['IMUrot']
-                        acc0 = llc_rec.acc[idx0]
-                        acc1 = llc_rec.acc[idx1]
-                        sys_out = IMUcalc.calc_angle(acc0, acc1, rot_angle)
-
+                        sys_out = llc_rec.aIMU[name]
                         llc_rec.u[name] = None
-                        llc_rec.aIMU[name] = round(sys_out, 2)
 
                 time.sleep(self.sampling_time)
 
@@ -121,6 +131,8 @@ class LowLevelController(threading.Thread):
             while llc_ref.state == 'PAUSE':
                 if IMU:
                     read_imu()
+                    calc_angle()
+
                 time.sleep(self.sampling_time)
 
             return llc_ref.state
@@ -133,7 +145,7 @@ class LowLevelController(threading.Thread):
         automat.add_state('PAUSE', pause_state)
         automat.add_state('ANGLE_REFERENCE', angle_reference)
         automat.add_state('FEED_THROUGH', feed_through)
-        automat.add_state('QUIT', None, end_state=True)
+        automat.add_state('EXIT', None, end_state=True)
         automat.set_start('PAUSE')
 
         try:

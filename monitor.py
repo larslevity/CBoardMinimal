@@ -14,10 +14,10 @@ import socket
 import random
 import numpy as np
 
-from Src.Visual.GUI import gtk_gui_v2
-from Src.Visual.GUI import datamanagement
-from Src.Visual.GUI import save
-from Src.Visual.PiCamera import pickler
+from Src.GUI import gtk_gui_v2
+from Src.GUI import datamanagement
+from Src.GUI import save
+from Src.Communication import pickler
 from Src.Management import timeout
 from Src.Management import exception
 
@@ -49,7 +49,7 @@ class GuiThread(threading.Thread):
         return self.gui_win.is_running
 
 
-def main(wait=30):
+def main(wait):
     def fill_rnd_values():
         def gen_rnd_val(mul=1.):
             rnd = random.randint(0, 100)
@@ -144,4 +144,4 @@ def main(wait=30):
 
 if __name__ == '__main__':
 
-    main(wait=30)
+    main(wait=10)

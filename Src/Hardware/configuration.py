@@ -34,5 +34,5 @@ IMUset = {
     1: {'id': 1},
     }
 CHANNELset = {
-    0: {'pin': 'P9_22', 'ctr': PID, 'IMUs': [0, 1], 'IMUrot': -90},
+    0: {'pin': 'P9_22', 'ctr': PID, 'IMUs': [0, 1], 'IMUrot': 0},
     }

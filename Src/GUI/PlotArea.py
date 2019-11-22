@@ -178,7 +178,7 @@ class PlotArea(Gtk.Bin):
         vbox.pack_start(hbox, expand=True, fill=True, padding=1)
         # ToggleButton for equal AxisButton
         image = Gtk.Image()
-        image.set_from_file("Src/Visual/GUI/pictures/Equal.png")
+        image.set_from_file("Src/GUI/pictures/Equal.png")
         toggle_btn = Gtk.ToggleButton()
         toggle_btn.add(image)
         toggle_btn.connect("clicked", self.change_axes_aspect)
@@ -188,7 +188,7 @@ class PlotArea(Gtk.Bin):
         spacer = Gtk.Label()
         hbox.pack_start(spacer, expand=True, fill=True, padding=0)
         # Adjustment for SpinButton:
-        adjustment = Gtk.Adjustment(value=30, lower=1, upper=1e5,
+        adjustment = Gtk.Adjustment(value=30, lower=1, upper=1e3,
                                     step_incr=1, page_incr=-1)
         # create Label
         label = Gtk.Label("Buffer [1]:")

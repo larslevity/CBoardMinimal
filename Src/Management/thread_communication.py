@@ -7,7 +7,6 @@ Created on Thu Jul 25 10:46:32 2019
 
 # from queue import Queue
 from Src.Hardware.configuration import CHANNELset
-from Src.Hardware.configuration import DiscreteCHANNELset
 from Src.Hardware.configuration import IMUset
 from Src.Hardware.configuration import STARTSTATE
 
@@ -23,7 +22,6 @@ class LLCReference(Borg):
     def __init__(self):
         Borg.__init__(self)
 
-        
         self.alpha = {name: 0. for name in CHANNELset}
         self.pwm = {name: 20. for name in CHANNELset}
         self.state = STARTSTATE
@@ -69,10 +67,8 @@ class SystemConfig(Borg):
 System Configuration as follows:
 IMUs:\t\t {}connected
 LivePlotter:\t {}connected
-ConsolePrinter:\t {}abled
 """.format(
-    '' if self.IMUsConnected else 'not ', '' if self.LivePlotter else 'not ',
-    'en' if self.ConsolePrinter else 'dis'))
+    '' if self.IMUsConnected else 'not ', '' if self.LivePlotter else 'not '))
 
 
 sys_config = SystemConfig()

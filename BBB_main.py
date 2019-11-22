@@ -39,7 +39,7 @@ rootLogger.addHandler(consoleHandler)
 
 def init_monitor_connection():
     plotsock = None
-    pc_ip = '134.28.136.131'
+    pc_ip = '192.168.7.1'
 
     with timeout.timeout(2):
         try:
@@ -63,7 +63,7 @@ def main():
         rootLogger.info('Starting LowLevelController ...')
         lowlevelctr = lowlevel_controller.LowLevelController()
         lowlevelctr.start()
-        time.sleep(.2)  # wait to init
+        time.sleep(.5)  # wait to init
         sys_config.IMUsConnected = lowlevelctr.is_imu_in_use()
 
         rootLogger.info('Searching for external devices in periphere...')
@@ -74,8 +74,7 @@ def main():
 
         if sys_config.LivePlotter:
             rootLogger.info('Starting GUI Printer ...')
-            guiPrinter = printer.GUIPrinter(sys_config.LivePlotter,
-                                            IMU=sys_config.IMUsConnected)
+            guiPrinter = printer.GUIPrinter(sys_config.LivePlotter)
             guiPrinter.setDaemon(True)
             guiPrinter.start()
 
@@ -94,8 +93,6 @@ def main():
 
     finally:
         lowlevelctr.kill()
-        if sys_config.ConsolePrinter:
-            cPrinter.kill()
         if sys_config.LivePlotter:
             guiPrinter.kill()
 

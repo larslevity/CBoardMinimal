@@ -6,6 +6,9 @@ import time
 from collections import deque
 
 
+GUISampling = .005
+
+
 def merge_multiple_dicts(dicts):
     super_dict = {}
     for d in dicts:
@@ -17,19 +20,23 @@ def merge_multiple_dicts(dicts):
 def rehash_record(reference=[None]*1, motor_in=[None]*1,
                   alphaIMU=[None]*1,
                   accx=[None]*2, accy=[None]*2, accz=[None]*2,
-                  gyrx=[None]*2, gyry=[None]*2, gyrz=[None]*2,
-                  IMU=False):
+                  gyrx=[None]*2, gyry=[None]*2, gyrz=[None]*2):
+    # record = rehash_record(r, u, aIMU, accx, accy, accz, gyrx, gyry, gyz)
 
-    
     r = {'r{}'.format(idx): px for idx, px in enumerate(reference)}
     u = {'u{}'.format(idx): px for idx, px in enumerate(motor_in)}
-    f = {'f{}'.format(idx): px for idx, px in enumerate(fixation)}
     t = {'time': time.time()}
 
-    record = merge_multiple_dicts([p, r, u, f, t])
-    if IMU:
-        aIMU = {'aIMU{}'.format(idx): px for idx, px in enumerate(alphaIMU)}
-        record = merge_multiple_dicts([record, aIMU])
+    record = merge_multiple_dicts([r, u, t])
+    aIMU = {'aIMU{}'.format(idx): px for idx, px in enumerate(alphaIMU)}
+    acx = {'accx{}'.format(idx): px for idx, px in enumerate(accx)}
+    acy = {'accy{}'.format(idx): px for idx, px in enumerate(accy)}
+    acz = {'accz{}'.format(idx): px for idx, px in enumerate(accz)}
+    gyx = {'gyrx{}'.format(idx): px for idx, px in enumerate(gyrx)}
+    gyy = {'gyry{}'.format(idx): px for idx, px in enumerate(gyry)}
+    gyz = {'gyrz{}'.format(idx): px for idx, px in enumerate(gyrz)}
+    record = merge_multiple_dicts(
+            [record, aIMU, acx, acy, acz, gyx, gyy, gyz])
 
     return record
 

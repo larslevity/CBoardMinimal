@@ -18,7 +18,7 @@ gi.require_version('Gtk', '3.0')
 # pylint: disable=too-many-public-methods, unused-argument
 # pylint: disable=too-many-instance-attributes
 class GeckoBotGUI(Gtk.Window):
-    """ The Main Window of PaintBot GUI """
+    """ The Main Window of GUI """
 
     def run(self):
         """ Add timeout which update the PlotWindow every ._interval seconds
@@ -74,7 +74,7 @@ class GeckoBotGUI(Gtk.Window):
             sampleinterval (Optional float): timesteps to update the plot
         """
         # Super Init:
-        Gtk.Window.__init__(self, title="GeckoBot GUI")
+        Gtk.Window.__init__(self, title="Monitor")
         self.connect('delete-event', Gtk.main_quit)
         self.connect("key-press-event", self._on_key_down_main_win)
         self.set_default_size(600, 400)
