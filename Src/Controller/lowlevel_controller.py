@@ -10,6 +10,13 @@ import logging
 import time
 import threading
 
+try:
+    import Adafruit_BBIO.PWM as PWM
+    import Adafruit_BBIO.ADC as ADC
+    ADC.setup()
+except ImportError:
+    pass
+
 from Src.Hardware import MPU_9150 as sensors
 
 from Src.Math import IMUcalc
@@ -26,6 +33,24 @@ from Src.Hardware.configuration import TSAMPLING
 
 rootLogger = logging.getLogger()
 
+POTIS = {0: "P9_33"}
+OUT = {0: "P8_13"}
+
+
+for name in CHANNELset:
+    PWM.start(OUT[name], 0, 25000)
+    PWM.set_duty_cycle(OUT[name], 10.0)
+
+
+def read_poti():
+    potis = {}
+    for idx in POTIS:
+        val = ADC.read(POTIS[idx])  # bug-> read twice
+        val = round(ADC.read(POTIS[idx])*100)/100
+        potis[idx] = val
+    llc_ref.ref = potis
+
+
 
 def IMU_connection_test():
     imu_set = [imu for imu in IMUset]
@@ -41,11 +66,12 @@ def IMU_connection_test():
     try:
         IMU = {}
         for name in IMUset:
-            print("IMU with mplx id: ", IMUset[name]['id'])
+            rootLogger.info("initialize IMU with mplx id: " +
+                            str(IMUset[name]['id']))
             IMU[name] = sensors.MPU_9150(
                 name=name, mplx_id=IMUset[name]['id'])
     except IOError:  # not connected
-        print("failed")
+        rootLogger.info("failed")
         IMU = False
     return IMU
 
@@ -61,7 +87,6 @@ class LowLevelController(threading.Thread):
 
     def run(self):
         IMU = IMU_connection_test()
-        print(IMU)
         self.imu_in_use = True if IMU else False
 
         def read_imu():
@@ -70,7 +95,8 @@ class LowLevelController(threading.Thread):
                     llc_rec.acc[name] = IMU[name].get_acceleration()
                     llc_rec.gyr[name] = IMU[name].get_gyro()
                 except IOError as e:
-                    if e.errno == errno.EREMOTEIO:
+                    if (e.errno == errno.EREMOTEIO 
+                        or e.errno == errno.EWOULDBLOCK):
                         rootLogger.exception(
                             'cant read imu device.' +
                             'Continue anyway ...Fail in [{}]'.format(name))
@@ -115,10 +141,14 @@ class LowLevelController(threading.Thread):
                 # read
                 if IMU:
                     read_imu()
+                    calc_angle()
+                read_poti()
                 # write
                 for name in CHANNELset:
-                    pwm = llc_ref.pwm[name]
-                    llc_rec.u[name] = pwm
+                    ref = llc_ref.ref[name]
+                    PWM.set_duty_cycle(OUT[name], ref*100)
+                    llc_rec.u[name] = ref*100
+                    
                 # meta
                 time.sleep(self.sampling_time)
 
@@ -137,6 +167,10 @@ class LowLevelController(threading.Thread):
 
             return llc_ref.state
 
+        def clean():
+            rootLogger.info('Clean PWM ...')
+            PWM.cleanup()
+
         """ ---------------- ----- ------- ----------------------------- """
         """ ---------------- RUN STATE MACHINE ------------------------- """
         """ ---------------- ----- ------- ----------------------------- """
@@ -145,8 +179,8 @@ class LowLevelController(threading.Thread):
         automat.add_state('PAUSE', pause_state)
         automat.add_state('ANGLE_REFERENCE', angle_reference)
         automat.add_state('FEED_THROUGH', feed_through)
-        automat.add_state('EXIT', None, end_state=True)
-        automat.set_start('PAUSE')
+        automat.add_state('EXIT', clean, end_state=True)
+        automat.set_start('FEED_THROUGH')
 
         try:
             rootLogger.info('Run LowLevelCtr ...')

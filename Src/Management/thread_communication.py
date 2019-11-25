@@ -24,6 +24,7 @@ class LLCReference(Borg):
 
         self.alpha = {name: 0. for name in CHANNELset}
         self.pwm = {name: 20. for name in CHANNELset}
+        self.ref = {name: 0. for name in CHANNELset}
         self.state = STARTSTATE
 
     def set_state(self, state):
