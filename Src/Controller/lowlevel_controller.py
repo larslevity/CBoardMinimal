@@ -30,6 +30,10 @@ from Src.Hardware.configuration import CHANNELset
 from Src.Hardware.configuration import IMUset
 from Src.Hardware.configuration import TSAMPLING
 
+from csv_read_test import pattern_ref
+from csv_read_test import generate_pose_ref
+from csv_read_test import read_list_from_csv
+
 
 rootLogger = logging.getLogger()
 
@@ -142,7 +146,8 @@ class LowLevelController(threading.Thread):
                 if IMU:
                     read_imu()
                     calc_angle()
-                read_poti()
+#                read_poti()                    #referenz über Poti
+                pattern_ref()                   #referenz über pattern
                 # write
                 for name in CHANNELset:
                     ref = llc_ref.ref[name]
