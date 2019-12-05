@@ -61,8 +61,8 @@ def generate_pose_ref(pattern, idx):                                        #gen
 def pattern_ref():
     mgmt.pattern = read_list_from_csv('test.csv')                               #festes Pattern zuweisen. kann ich das so machen?
     if mgmt.last_process_time + mgmt.process_time < time.time():
-        if mgmt.initial_cycle:  # initial cycle                                    #brauche ich den initial cycle mit initial pose? 
-            pattern = mgmt.pattern                                                    #-> hab ja immer die gleiche ausgangalage. Nur zum idx setzen.
+        if mgmt.initial_cycle:  # initial cycle                                    
+            pattern = mgmt.pattern
             mgmt.idx = 0
             mgmt.initial_cycle = False
         else:  # normaler style
@@ -76,11 +76,12 @@ def pattern_ref():
         mgmt.process_time = processtime
         mgmt.last_process_time = time.time()
         mgmt.idx = mgmt.idx+1 if mgmt.idx < len(pattern)-1 else 0
-        print(mgmt.process_time, mgmt.last_process_time)
+        #print(mgmt.process_time, mgmt.last_process_time)                   #test print
 
 #values = read_list_from_csv('test.csv')
 
 #print(values[0][0])
 #print(values)
 pattern_ref()
+print(llc_ref.ref)
     

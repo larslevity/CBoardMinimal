@@ -146,8 +146,8 @@ class LowLevelController(threading.Thread):
                 if IMU:
                     read_imu()
                     calc_angle()
-                read_poti()                    #referenz über Poti
-#                pattern_ref()                   #referenz über pattern
+#                read_poti()                    #referenz über Poti
+                pattern_ref()                   #referenz über pattern
                 # write
                 for name in CHANNELset:
                     ref = llc_ref.ref[name]
