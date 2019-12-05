@@ -55,14 +55,14 @@ def generate_pose_ref(pattern, idx):                                        #gen
     ppos = pos[:n_pc]
     for kdx, pp in enumerate(ppos):
         pv_task[kdx] = pp
-
+#        print(pv_task, local_min_process_time)                             #test print
     return pv_task, local_min_process_time
 
 def pattern_ref():
     mgmt.pattern = read_list_from_csv('test.csv')                               #festes Pattern zuweisen. kann ich das so machen?
     if mgmt.last_process_time + mgmt.process_time < time.time():
         if mgmt.initial_cycle:  # initial cycle                                    #brauche ich den initial cycle mit initial pose? 
-#            pattern = get_initial_pose(mgmt.pattern)                               #-> hab ja immer die gleiche ausgangalage. Nur zum idx setzen.
+            pattern = mgmt.pattern                               #-> hab ja immer die gleiche ausgangalage. Nur zum idx setzen.
             mgmt.idx = 0
             mgmt.initial_cycle = False
         else:  # normaler style
@@ -78,8 +78,9 @@ def pattern_ref():
         mgmt.idx = mgmt.idx+1 if mgmt.idx < len(pattern)-1 else 0
 
 
-values = read_list_from_csv('test.csv')
+#values = read_list_from_csv('test.csv')
 
 #print(values[0][0])
-print(values)
-
+#print(values)
+#pattern_ref()
+    
