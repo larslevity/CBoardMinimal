@@ -39,7 +39,7 @@ rootLogger.addHandler(consoleHandler)
 
 def init_monitor_connection():
     plotsock = None
-    pc_ip = '192.168.7.1'
+    pc_ip = '134.28.136.131'  #'192.168.7.1'
 
     with timeout.timeout(2):
         try:
