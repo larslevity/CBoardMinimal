@@ -34,12 +34,13 @@ from csv_read_test import pattern_ref
 from csv_read_test import generate_pose_ref
 from csv_read_test import read_list_from_csv
 
+from Src.Controller.maricas_extension import calc_alpha_J
+
 
 rootLogger = logging.getLogger()
 
 POTIS = {0: "P9_33"}
 OUT = {0: "P8_13"}
-
 
 for name in CHANNELset:
     PWM.start(OUT[name], 0, 25000)
@@ -81,10 +82,15 @@ def IMU_connection_test():
 
 
 class LowLevelController(threading.Thread):
+
+    
     def __init__(self):
         threading.Thread.__init__(self)
         self.sampling_time = TSAMPLING
         self.imu_in_use = None
+        self.alpha_last = 0        #M init alpha
+        self.packet = 0            #M init packet
+        self.packet_last = [0, 0, 0, 0, 0, 0]       #M init packet_last
 
     def is_imu_in_use(self):
         return self.imu_in_use
@@ -109,18 +115,29 @@ class LowLevelController(threading.Thread):
                         rootLogger.error(e, exc_info=True)
                         raise e
 
-        def calc_angle():
+        def calc_angle(self):                       #M "self" hinzugefügt
             if IMU:
                 for name in CHANNELset:
                     idx0, idx1 = CHANNELset[name]['IMUs']
                     rot_angle = CHANNELset[name]['IMUrot']
                     acc0 = llc_rec.acc[idx0]
                     acc1 = llc_rec.acc[idx1]
+                    gyr0 = llc_rec.gyr[idx0] ##M
+                    gyr1 = llc_rec.gyr[idx1] ##M
+                    t = time.time()          ##M
+                    self.alpha_last = self.packet_last[5]
+                    self.packet = (acc0, acc1, gyr0[2], gyr1[2], t, self.alpha_last)
                     aIMU = IMUcalc.calc_angle(acc0, acc1, rot_angle)
+                    llc_rec.u[name] = 10
+                    aIMU_filt = calc_alpha_J(self.packet, self.packet_last, rot_angle) # TODO M, set actuator properties in maricas_extension
+                    #self.packet[5] = aIMU_filt
+                    llc_rec.u[name] = aIMU_filt           ##M
+                    self.packet_last = (self.packet[0],self.packet[1], self.packet[2], self.packet[3], self.packet[4], aIMU_filt)        ##M
+                    
                     llc_rec.aIMU[name] = round(aIMU, 2)
 
         read_imu()  # init recorder
-        calc_angle()
+        calc_angle(self)
 
         def angle_reference():
             rootLogger.info("Arriving in ANGLE_REFERENCE State. ")
@@ -132,7 +149,7 @@ class LowLevelController(threading.Thread):
                     for name in IMUset:
                         ref = llc_ref.pressure[name]*90.
                         sys_out = llc_rec.aIMU[name]
-                        llc_rec.u[name] = None
+ #                       llc_rec.u[name] = None
 
                 time.sleep(self.sampling_time)
 
@@ -145,14 +162,13 @@ class LowLevelController(threading.Thread):
                 # read
                 if IMU:
                     read_imu()
-                    calc_angle()
+                    calc_angle(self)
 #                read_poti()                    #referenz über Poti
                 pattern_ref()                   #referenz über pattern
                 # write
                 for name in CHANNELset:
                     ref = llc_ref.ref[name]
                     PWM.set_duty_cycle(OUT[name], ref*100)
-                    llc_rec.u[name] = ref*100
                     
                 # meta
                 time.sleep(self.sampling_time)
