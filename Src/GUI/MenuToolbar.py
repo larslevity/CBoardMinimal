@@ -162,12 +162,12 @@ class MenuToolbarWindow(Gtk.Bin):
 
     def on_menu_edit(self, widget):
         """ starts the stimation state """
-        print "Menu item " + widget.get_name() + " was selected"
+        print("Menu item " + widget.get_name() + " was selected")
         if widget.get_name() == 'EditEstimate':
             if self.data.flag['PAUSE'] is True:
                 self.data.flag['ESTIMATE'] = True
             else:
-                print 'Only possile in PAUSE state...'
+                print('Only possile in PAUSE state...')
 
     def on_load_clicked(self, widget):
         """ Load an trajectory from somewhere

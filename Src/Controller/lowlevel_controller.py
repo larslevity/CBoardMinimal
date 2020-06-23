@@ -164,7 +164,7 @@ class LowLevelController(threading.Thread):
                     read_imu()
                     calc_angle(self)
                 read_poti()                    #referenz über Poti
-#                pattern_ref()                   #referenz über pattern
+#                pattern_ref(patternname='ramp.csv')                   #referenz über pattern
                 # write
                 for name in CHANNELset:
                     ref = llc_ref.ref[name]

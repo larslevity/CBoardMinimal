@@ -58,8 +58,8 @@ def generate_pose_ref(pattern, idx):                                        #gen
 #        print(pv_task, local_min_process_time)                             #test print hier kommt die erste zeile des patterns an
     return pv_task, local_min_process_time
 
-def pattern_ref():
-    mgmt.pattern = read_list_from_csv('test.csv')                               #festes Pattern zuweisen. kann ich das so machen?
+def pattern_ref(patternname):
+    mgmt.pattern = read_list_from_csv(patternname)                               #festes Pattern zuweisen. kann ich das so machen?
     if mgmt.last_process_time + mgmt.process_time < time.time():
         if mgmt.initial_cycle:  # initial cycle                                    
             pattern = mgmt.pattern
@@ -78,10 +78,4 @@ def pattern_ref():
         mgmt.idx = mgmt.idx+1 if mgmt.idx < len(pattern)-1 else 0
         #print(mgmt.process_time, mgmt.last_process_time)                   #test print
 
-#values = read_list_from_csv('test.csv')
-
-#print(values[0][0])
-#print(values)
-pattern_ref()
-print(llc_ref.ref)
     
