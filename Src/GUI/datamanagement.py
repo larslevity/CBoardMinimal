@@ -17,17 +17,18 @@ def merge_multiple_dicts(dicts):
     return super_dict
 
 
-def rehash_record(reference=[None]*1, motor_in=[None]*1,
+def rehash_record(pref=[None]*1, aref=[None]*1, motor_in=[None]*1,
                   alphaIMU=[None]*1,
                   accx=[None]*2, accy=[None]*2, accz=[None]*2,
                   gyrx=[None]*2, gyry=[None]*2, gyrz=[None]*2):
     # record = rehash_record(r, u, aIMU, accx, accy, accz, gyrx, gyry, gyz)
 
-    r = {'r{}'.format(idx): px for idx, px in enumerate(reference)}
+    pref = {'pref{}'.format(idx): px for idx, px in enumerate(pref)}
+    aref = {'aref{}'.format(idx): px for idx, px in enumerate(aref)}
     u = {'u{}'.format(idx): px for idx, px in enumerate(motor_in)}
     t = {'time': time.time()}
 
-    record = merge_multiple_dicts([r, u, t])
+    record = merge_multiple_dicts([pref, aref, u, t])
     aIMU = {'aIMU{}'.format(idx): px for idx, px in enumerate(alphaIMU)}
     acx = {'accx{}'.format(idx): px for idx, px in enumerate(accx)}
     acy = {'accy{}'.format(idx): px for idx, px in enumerate(accy)}

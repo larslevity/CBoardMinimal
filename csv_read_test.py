@@ -11,7 +11,7 @@ import time
 
 from Src.Management.thread_communication import llc_ref
 
-n_pc = len(llc_ref.ref) #pressure reference
+n_pc = len(llc_ref.pressure) #pressure reference
 
 class PatternMGMT(object):
     def __init__(self):
@@ -71,11 +71,17 @@ def pattern_ref(patternname):
         # generate tasks
         pvtsk, processtime = generate_pose_ref(pattern, mgmt.idx)            #welche form hat pattern?
         # send to main thread
-        llc_ref.ref = pvtsk                                                 #druckreferenz
+        llc_ref.alpha = pvtsk                                                 #druckreferenz
         # organisation
         mgmt.process_time = processtime
         mgmt.last_process_time = time.time()
         mgmt.idx = mgmt.idx+1 if mgmt.idx < len(pattern)-1 else 0
         #print(mgmt.process_time, mgmt.last_process_time)                   #test print
 
+    
+if __name__ == "__main__":
+    pattern_ref('pattern_0.csv')
+    print(mgmt.pattern)
+    print(llc_ref.alpha)
+    
     

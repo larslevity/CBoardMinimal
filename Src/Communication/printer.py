@@ -22,7 +22,8 @@ n_imus = len(llc_rec.acc)       # IMUS connected
 
 
 def prepare_data():
-    r = [round(llc_ref.ref[i], 2) for i in range(n_pc)]
+    aref = [round(llc_ref.alpha[i], 2) for i in range(n_pc)]
+    pref = [round(llc_ref.pressure[i], 2) for i in range(n_pc)]
     u = [round(llc_rec.u[i], 2) for i in range(n_pc)]
 
     accx = [round(llc_rec.acc[i][0], 2) for i in range(n_imus)]
@@ -36,7 +37,7 @@ def prepare_data():
             for i in range(len(llc_rec.aIMU))]
 
     # record = rehash_record(r, u, aIMU, accx, accy, accz, gyrx, gyry, gyrz)
-    return (r, u, aIMU, accx, accy, accz, gyrx, gyry, gyrz)
+    return (pref, aref, u, aIMU, accx, accy, accz, gyrx, gyry, gyrz)
 
 
 class GUIPrinter(threading.Thread):

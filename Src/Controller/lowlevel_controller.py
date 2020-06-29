@@ -29,12 +29,14 @@ from Src.Management.thread_communication import llc_rec
 from Src.Hardware.configuration import CHANNELset
 from Src.Hardware.configuration import IMUset
 from Src.Hardware.configuration import TSAMPLING
+from Src.Hardware.configuration import STARTSTATE
 
 from csv_read_test import pattern_ref
-from csv_read_test import generate_pose_ref
-from csv_read_test import read_list_from_csv
 
 from Src.Controller.maricas_extension import calc_alpha_J
+from Src.Controller.ctrlib import PressureBoost
+from Src.Controller import calibration
+
 
 
 rootLogger = logging.getLogger()
@@ -53,7 +55,14 @@ def read_poti():
         val = ADC.read(POTIS[idx])  # bug-> read twice
         val = round(ADC.read(POTIS[idx])*100)/100
         potis[idx] = val
-    llc_ref.ref = potis
+    llc_ref.pressure = potis
+
+
+def is_poti():
+    for idx in POTIS:
+        val = ADC.read(POTIS[idx])  # bug-> read twice
+        val = round(ADC.read(POTIS[idx])*100)/100
+    return True if val != 0 else False
 
 
 
@@ -127,29 +136,31 @@ class LowLevelController(threading.Thread):
                     t = time.time()          ##M
                     self.alpha_last = self.packet_last[5]
                     self.packet = (acc0, acc1, gyr0[2], gyr1[2], t, self.alpha_last)
-                    aIMU = IMUcalc.calc_angle(acc0, acc1, rot_angle)
-                    llc_rec.u[name] = 10
+#                    aIMU = IMUcalc.calc_angle(acc0, acc1, rot_angle)
                     aIMU_filt = calc_alpha_J(self.packet, self.packet_last, rot_angle) # TODO M, set actuator properties in maricas_extension
-                    #self.packet[5] = aIMU_filt
-                    llc_rec.u[name] = aIMU_filt           ##M
                     self.packet_last = (self.packet[0],self.packet[1], self.packet[2], self.packet[3], self.packet[4], aIMU_filt)        ##M
                     
-                    llc_rec.aIMU[name] = round(aIMU, 2)
+                    llc_rec.aIMU[name] = round(aIMU_filt, 2)
 
         read_imu()  # init recorder
         calc_angle(self)
 
         def angle_reference():
             rootLogger.info("Arriving in ANGLE_REFERENCE State. ")
+            booster = PressureBoost(version='big', tboost=.5)
 
             while llc_ref.state == 'ANGLE_REFERENCE':
-                if IMU:
+                if IMU and is_poti():
                     read_imu()
-                    calc_angle()
-                    for name in IMUset:
-                        ref = llc_ref.pressure[name]*90.
-                        sys_out = llc_rec.aIMU[name]
- #                       llc_rec.u[name] = None
+                    calc_angle(self)
+                    #referenz über pattern
+                    pattern_ref(patternname='pattern_0.csv')
+                    for name in CHANNELset:
+                        aref = llc_ref.alpha[name]
+                        pref = booster.get_reference(aref)
+                        pwm = calibration.cut_off(int(100*pref), 100)
+                        PWM.set_duty_cycle(OUT[name], pwm)
+                        llc_rec.u[name] = pwm
 
                 time.sleep(self.sampling_time)
 
@@ -164,13 +175,11 @@ class LowLevelController(threading.Thread):
                     read_imu()
                     calc_angle(self)
                 read_poti()                    #referenz über Poti
-#                pattern_ref(patternname='ramp.csv')                   #referenz über pattern
                 # write
                 for name in CHANNELset:
-                    ref = llc_ref.ref[name]
-                    PWM.set_duty_cycle(OUT[name], ref*100)
-                    
-                # meta
+                    pref = llc_ref.pressure[name]
+                    PWM.set_duty_cycle(OUT[name], pref*100)
+                    llc_rec.u[name] = pref*100
                 time.sleep(self.sampling_time)
 
             return llc_ref.state
@@ -201,7 +210,10 @@ class LowLevelController(threading.Thread):
         automat.add_state('ANGLE_REFERENCE', angle_reference)
         automat.add_state('FEED_THROUGH', feed_through)
         automat.add_state('EXIT', clean, end_state=True)
-        automat.set_start('FEED_THROUGH')
+        
+#        automat.set_start('FEED_THROUGH')
+        automat.set_start(STARTSTATE)
+
 
         try:
             rootLogger.info('Run LowLevelCtr ...')

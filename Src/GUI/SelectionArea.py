@@ -249,7 +249,7 @@ class SelectionArea(Gtk.Bin):
         image = Gtk.Image()
         image.set_from_file("Src/GUI/pictures/reference.png")
         r_btn.add(image)
-        r_btn.connect("clicked", self.keylist_append, 'r')
+        r_btn.connect("clicked", self.keylist_append, 'aref')
         btns_hbox1.pack_start(r_btn, False, False, 2)
         # del btn
         del_btn = Gtk.Button()
