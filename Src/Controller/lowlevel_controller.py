@@ -147,7 +147,7 @@ class LowLevelController(threading.Thread):
 
         def angle_reference():
             rootLogger.info("Arriving in ANGLE_REFERENCE State. ")
-            booster = PressureBoost(version='big', tboost=.5)
+            booster = PressureBoost(version='big', tboost=1)
 
             while llc_ref.state == 'ANGLE_REFERENCE':
                 if IMU and is_poti():
