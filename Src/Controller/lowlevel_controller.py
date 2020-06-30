@@ -34,7 +34,7 @@ from Src.Hardware.configuration import STARTSTATE
 from csv_read_test import pattern_ref
 
 from Src.Controller.maricas_extension import calc_alpha_J
-from Src.Controller.ctrlib import PressureBoost
+from Src.Controller import ctrlib
 from Src.Controller import calibration
 
 
@@ -147,7 +147,7 @@ class LowLevelController(threading.Thread):
 
         def PPIDBooster():
             rootLogger.info("Arriving in PPIDBooster State. ")
-            booster = PressureBoost(version='big', tboost=.75)
+            booster = ctrlib.PressureBoost(version='big', tboost=.75)
 
             while llc_ref.state == 'PPIDBooster':
                 if IMU and is_poti():
@@ -180,6 +180,29 @@ class LowLevelController(threading.Thread):
                         aref = llc_ref.alpha[name]
                         pref = calibration.get_pressure(aref, version='big')
                         pwm = calibration.cut_off(int(100*pref), 100)
+                        PWM.set_duty_cycle(OUT[name], pwm)
+                        llc_rec.u[name] = pwm
+
+                time.sleep(self.sampling_time)
+
+            return llc_ref.state
+
+
+        def CasPID():
+            rootLogger.info("Arriving in CasPID State. ")
+            PID = [0.011, 0.021, 0.001]
+            CasCtr = ctrlib.PidController_WindUp(PID, TSAMPLING, max_output=1.)
+
+            while llc_ref.state == 'CASPID':
+                if IMU and is_poti():
+                    read_imu()
+                    calc_angle(self)
+                    #referenz über pattern
+                    pattern_ref(patternname='pattern_0.csv', alpha=True)
+                    for name in CHANNELset:
+                        aref = llc_ref.alpha[name]
+                        pref = CasCtr.output(aref, llc_rec.aIMU[name])
+                        pwm = pwm = calibration.cut_off(pref*100, 100)
                         PWM.set_duty_cycle(OUT[name], pwm)
                         llc_rec.u[name] = pwm
 
@@ -250,6 +273,7 @@ class LowLevelController(threading.Thread):
         automat.add_state('PAUSE', pause_state)
         automat.add_state('PPID', PPID)
         automat.add_state('POTIREF', POTIREF)
+        automat.add_state('CASPID', CasPID)
         automat.add_state('CLB', clb)
         automat.add_state('EXIT', clean, end_state=True)
         

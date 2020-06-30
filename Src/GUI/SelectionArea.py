@@ -13,22 +13,27 @@ class SelectionArea(Gtk.Bin):
     Selection Area with the atrribute keylist containing tuple of (abs, ord)
     which somebody selected to plot in the Plotting Area
     """
-    def find_default_keylist(self, modus='aIMU'):
+    def find_default_keylist(self, modus=['aIMU', 'u', 'aref']):
         """ Look in Recorder and check what data is worth to plot """
         keylist = []
-        if modus == 'pos':
-            recorded_data = sorted(self.data.recorded.iterkeys())
-            for idx in range(6) + [8]:
-                if 'x{}'.format(idx) in recorded_data:
-                    if 'y{}'.format(idx) in recorded_data:
-                        keylist.append(('x{}'.format(idx), 'y{}'.format(idx)))
+        if len(modus) == 1:
+            modi = [modus]
         else:
-            for el in sorted(self.data.recorded.iterkeys()):
-                if len(el.split('_')) == 1:
-                    if (len(el.split(modus)) == 2 and
-                       len(el.split(modus)[0]) == 0):
-                        if 'time' in self.data.recorded:
-                            keylist.append(('time', el))
+            modi = modus
+        for modus in modi:
+            if modus == 'pos':
+                recorded_data = sorted(self.data.recorded.iterkeys())
+                for idx in range(6) + [8]:
+                    if 'x{}'.format(idx) in recorded_data:
+                        if 'y{}'.format(idx) in recorded_data:
+                            keylist.append(('x{}'.format(idx), 'y{}'.format(idx)))
+            else:
+                for el in sorted(self.data.recorded.iterkeys()):
+                    if len(el.split('_')) == 1:
+                        if (len(el.split(modus)) == 2 and
+                           len(el.split(modus)[0]) == 0):
+                            if 'time' in self.data.recorded:
+                                keylist.append(('time', el))
 
         return keylist
 

@@ -99,7 +99,6 @@ class PidController_WindUp(Controller):
         self.reset_state()
 
     def output(self, reference, system_output):
-        # calc error
         err = reference - system_output
         # Derivative Anteil
         # diff = (err - self.last_err)/self.tsampling
@@ -109,14 +108,19 @@ class PidController_WindUp(Controller):
             self.Td/(self.gam+self.tsampling/2)*(err-self.last_err)
         self.last_err = err
         # Integral Anteil
-        integ = self.integral + self.tsampling / (2*self.Ti)*(err)
+        integ = self.integral + (self.tsampling / (2*self.Ti))*(err-self.windup_guard)
+        if np.abs(integ*self.Kp) > self.max_output:
+            integ = self.max_output*np.sign(integ)*self.Kp
         self.integral = integ
 
         # Sum
         controller_output = self.Kp*(err + integ + diff)
 
         if np.abs(controller_output) > self.max_output:
+            self.windup_guard = controller_output * \
+                (1-self.max_output/abs(controller_output))
             self.last_out = self.max_output*np.sign(controller_output)
         else:
+            self.windup_guard = 0.
             self.last_out = controller_output
         return self.last_out
