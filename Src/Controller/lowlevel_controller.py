@@ -154,7 +154,7 @@ class LowLevelController(threading.Thread):
                     read_imu()
                     calc_angle(self)
                     #referenz über pattern
-                    pattern_ref(patternname='pattern_0.csv')
+                    pattern_ref(patternname='pattern_0.csv', alpha=True)
                     for name in CHANNELset:
                         aref = llc_ref.alpha[name]
                         pref = booster.get_reference(aref)
@@ -175,6 +175,24 @@ class LowLevelController(threading.Thread):
                     read_imu()
                     calc_angle(self)
                 read_poti()                    #referenz über Poti
+                # write
+                for name in CHANNELset:
+                    pref = llc_ref.pressure[name]
+                    PWM.set_duty_cycle(OUT[name], pref*100)
+                    llc_rec.u[name] = pref*100
+                time.sleep(self.sampling_time)
+
+            return llc_ref.state
+
+        def clb():
+            rootLogger.info("Arriving in CLB State: ")
+
+            while llc_ref.state == 'CLB':
+                # read
+                if IMU and is_poti():
+                    read_imu()
+                    calc_angle(self)
+                pattern_ref(patternname='clb.csv', alpha=False)
                 # write
                 for name in CHANNELset:
                     pref = llc_ref.pressure[name]
@@ -209,6 +227,7 @@ class LowLevelController(threading.Thread):
         automat.add_state('PAUSE', pause_state)
         automat.add_state('ANGLE_REFERENCE', angle_reference)
         automat.add_state('FEED_THROUGH', feed_through)
+        automat.add_state('CLB', clb)
         automat.add_state('EXIT', clean, end_state=True)
         
 #        automat.set_start('FEED_THROUGH')

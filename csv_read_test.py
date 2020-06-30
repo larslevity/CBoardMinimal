@@ -47,7 +47,7 @@ def read_list_from_csv(filename):                                           #rea
     return out
 
 
-def generate_pose_ref(pattern, idx):                                        #generate pose ref (dic?) from list
+def generate_pose_ref(pattern, idx):
     pos = pattern[idx]
     pv_task = {}
 
@@ -55,11 +55,11 @@ def generate_pose_ref(pattern, idx):                                        #gen
     ppos = pos[:n_pc]
     for kdx, pp in enumerate(ppos):
         pv_task[kdx] = pp
-#        print(pv_task, local_min_process_time)                             #test print hier kommt die erste zeile des patterns an
     return pv_task, local_min_process_time
 
-def pattern_ref(patternname):
-    mgmt.pattern = read_list_from_csv(patternname)                               #festes Pattern zuweisen. kann ich das so machen?
+def pattern_ref(patternname, alpha=True):
+    if not mgmt.pattern:
+        mgmt.pattern = read_list_from_csv(patternname)
     if mgmt.last_process_time + mgmt.process_time < time.time():
         if mgmt.initial_cycle:  # initial cycle                                    
             pattern = mgmt.pattern
@@ -67,16 +67,17 @@ def pattern_ref(patternname):
             mgmt.initial_cycle = False
         else:  # normaler style
             pattern = mgmt.pattern
-#            print(pattern)                                                      #test print -> no output -> das ganze läuft nur einmal durch
         # generate tasks
-        pvtsk, processtime = generate_pose_ref(pattern, mgmt.idx)            #welche form hat pattern?
+        pvtsk, processtime = generate_pose_ref(pattern, mgmt.idx)
         # send to main thread
-        llc_ref.alpha = pvtsk                                                 #druckreferenz
+        if alpha:
+            llc_ref.alpha = pvtsk
+        else:
+            llc_ref.pressure = pvtsk
         # organisation
         mgmt.process_time = processtime
         mgmt.last_process_time = time.time()
         mgmt.idx = mgmt.idx+1 if mgmt.idx < len(pattern)-1 else 0
-        #print(mgmt.process_time, mgmt.last_process_time)                   #test print
 
     
 if __name__ == "__main__":
