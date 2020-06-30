@@ -145,11 +145,11 @@ class LowLevelController(threading.Thread):
         read_imu()  # init recorder
         calc_angle(self)
 
-        def angle_reference():
-            rootLogger.info("Arriving in ANGLE_REFERENCE State. ")
-            booster = PressureBoost(version='big', tboost=1)
+        def PPIDBooster():
+            rootLogger.info("Arriving in PPIDBooster State. ")
+            booster = PressureBoost(version='big', tboost=.75)
 
-            while llc_ref.state == 'ANGLE_REFERENCE':
+            while llc_ref.state == 'PPIDBooster':
                 if IMU and is_poti():
                     read_imu()
                     calc_angle(self)
@@ -166,10 +166,33 @@ class LowLevelController(threading.Thread):
 
             return llc_ref.state
 
-        def feed_through():
-            rootLogger.info("Arriving in FEED_THROUGH State: ")
 
-            while llc_ref.state == 'FEED_THROUGH':
+        def PPID():
+            rootLogger.info("Arriving in PPID State. ")
+
+            while llc_ref.state == 'PPID':
+                if IMU and is_poti():
+                    read_imu()
+                    calc_angle(self)
+                    #referenz über pattern
+                    pattern_ref(patternname='pattern_0.csv', alpha=True)
+                    for name in CHANNELset:
+                        aref = llc_ref.alpha[name]
+                        pref = calibration.get_pressure(aref, version='big')
+                        pwm = calibration.cut_off(int(100*pref), 100)
+                        PWM.set_duty_cycle(OUT[name], pwm)
+                        llc_rec.u[name] = pwm
+
+                time.sleep(self.sampling_time)
+
+            return llc_ref.state
+
+
+
+        def POTIREF():
+            rootLogger.info("Arriving in POTIREF State: ")
+
+            while llc_ref.state == 'POTIREF':
                 # read
                 if IMU:
                     read_imu()
@@ -225,8 +248,8 @@ class LowLevelController(threading.Thread):
 
         automat = state_machine.StateMachine()
         automat.add_state('PAUSE', pause_state)
-        automat.add_state('ANGLE_REFERENCE', angle_reference)
-        automat.add_state('FEED_THROUGH', feed_through)
+        automat.add_state('PPID', PPID)
+        automat.add_state('POTIREF', POTIREF)
         automat.add_state('CLB', clb)
         automat.add_state('EXIT', clean, end_state=True)
         
