@@ -149,7 +149,7 @@ class LowLevelController(threading.Thread):
             rootLogger.info("Arriving in PPIDBooster State. ")
             booster = ctrlib.PressureBoost(version='big', tboost=.75)
 
-            while llc_ref.state == 'PPIDBooster':
+            while llc_ref.state == 'PPIDBOOSTER':
                 if IMU and is_poti():
                     read_imu()
                     calc_angle(self)
@@ -213,7 +213,7 @@ class LowLevelController(threading.Thread):
 
         def CasPIDClb():
             rootLogger.info("Arriving in CasPIDClb State. ")
-            PID = [0.0204, 0.11, 0.0037]
+            PID = [0.0204, 0.13, 0.0037]
             CasCtr = ctrlib.PidController_WindUp(PID, TSAMPLING, max_output=.4)
 
             while llc_ref.state == 'CASPIDCLB':
@@ -301,6 +301,7 @@ class LowLevelController(threading.Thread):
         automat.add_state('POTIREF', POTIREF)
         automat.add_state('CASPID', CasPID)
         automat.add_state('CASPIDCLB', CasPIDClb)
+        automat.add_state('PPIDBOOSTER', PPIDBooster)
         automat.add_state('CLB', clb)
         automat.add_state('EXIT', clean, end_state=True)
         
