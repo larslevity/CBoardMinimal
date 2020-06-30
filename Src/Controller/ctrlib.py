@@ -75,11 +75,13 @@ class PidController_WindUp(Controller):
         self.Kp = gain[0]
         self.Ti = gain[1]
         self.Td = gain[2]
+        self.KAW = 1  # Anti WindUp Gain
         self.max_output = max_output
-        self.integral = 0.
+        self.last_integ = 0.
         self.last_err = 0.
-        self.last_out = 0.
-        self.windup_guard = 0
+        self.last_diff = 0.
+        self.last_out = 0
+        self.last_out_uncut = 0
         self.gam = .1   # pole for stability. Typically = .1
         self.tsampling = tsampling
 
@@ -100,27 +102,21 @@ class PidController_WindUp(Controller):
 
     def output(self, reference, system_output):
         err = reference - system_output
-        # Derivative Anteil
-        # diff = (err - self.last_err)/self.tsampling
         diff = (self.gam*self.Td - self.tsampling/2) / \
-            (self.gam*self.Td + self.tsampling/2) * \
-            self.last_out + \
-            self.Td/(self.gam+self.tsampling/2)*(err-self.last_err)
+            (self.gam*self.Td + self.tsampling/2) * self.last_diff + \
+            self.Td*self.Kp/(self.gam*self.Td+self.tsampling/2)*(err-self.last_err)
         self.last_err = err
+        self.last_diff = diff
         # Integral Anteil
-        integ = self.integral + (self.tsampling / (2*self.Ti))*(err-self.windup_guard)
-        if np.abs(integ*self.Kp) > self.max_output:
-            integ = self.max_output*np.sign(integ)*self.Kp
-        self.integral = integ
+        integ = self.last_integ + (self.tsampling / (self.Ti))* \
+                (err*self.Kp - self.KAW*(self.last_out_uncut-self.last_out))
+        self.last_integ = integ
 
-        # Sum
-        controller_output = self.Kp*(err + integ + diff)
+        out_uncut = self.Kp*err + integ + diff
+        self.last_out_uncut = out_uncut
 
-        if np.abs(controller_output) > self.max_output:
-            self.windup_guard = controller_output * \
-                (1-self.max_output/abs(controller_output))
-            self.last_out = self.max_output*np.sign(controller_output)
+        if np.abs(out_uncut) > self.max_output:
+            self.last_out = self.max_output*np.sign(out_uncut)
         else:
-            self.windup_guard = 0.
-            self.last_out = controller_output
+            self.last_out = out_uncut
         return self.last_out

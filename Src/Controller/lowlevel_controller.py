@@ -190,7 +190,7 @@ class LowLevelController(threading.Thread):
 
         def CasPID():
             rootLogger.info("Arriving in CasPID State. ")
-            PID = [0.011, 0.021, 0.001]
+            PID = [0.008, 0.020, .01]
             CasCtr = ctrlib.PidController_WindUp(PID, TSAMPLING, max_output=1.)
 
             while llc_ref.state == 'CASPID':
@@ -209,6 +209,32 @@ class LowLevelController(threading.Thread):
                 time.sleep(self.sampling_time)
 
             return llc_ref.state
+
+
+        def CasPIDClb():
+            rootLogger.info("Arriving in CasPIDClb State. ")
+            PID = [0.0204, 0.11, 0.0037]
+            CasCtr = ctrlib.PidController_WindUp(PID, TSAMPLING, max_output=.4)
+
+            while llc_ref.state == 'CASPIDCLB':
+                if IMU and is_poti():
+                    read_imu()
+                    calc_angle(self)
+                    #referenz über pattern
+                    pattern_ref(patternname='pattern_0.csv', alpha=True)
+                    for name in CHANNELset:
+                        aref = llc_ref.alpha[name]
+                        clb = calibration.get_pressure(aref, version='big')
+                        pid = CasCtr.output(aref, llc_rec.aIMU[name])
+                        pref = clb + pid
+                        pwm = pwm = calibration.cut_off(pref*100, 100)
+                        PWM.set_duty_cycle(OUT[name], pwm)
+                        llc_rec.u[name] = pwm
+
+                time.sleep(self.sampling_time)
+
+            return llc_ref.state
+
 
 
 
@@ -274,6 +300,7 @@ class LowLevelController(threading.Thread):
         automat.add_state('PPID', PPID)
         automat.add_state('POTIREF', POTIREF)
         automat.add_state('CASPID', CasPID)
+        automat.add_state('CASPIDCLB', CasPIDClb)
         automat.add_state('CLB', clb)
         automat.add_state('EXIT', clean, end_state=True)
         
