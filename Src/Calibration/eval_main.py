@@ -7,6 +7,7 @@ Created on Thu Feb 21 18:38:25 2019
 
 import matplotlib.pyplot as plt
 import numpy as np
+import tikzplotlib
 
 import load as my_load
 
@@ -64,13 +65,37 @@ plt.ylabel('alpha')
 plt.grid()
 
 
-plt.figure(3)
-plt.plot(time, alpha)
-plt.plot(time_mean, alpha_mean)
-plt.xlabel('time')
-plt.ylabel('alpha')
-plt.grid()
 
+fig, (ax1, ax2) = plt.subplots(nrows=2, sharex=True,
+         gridspec_kw={'height_ratios': [3, 1]})
+
+ax1.plot(time, alpha, color='blue')
+ax2.plot(time, pref, color='red')
+
+ax2.grid()
+ax2.set_ylabel(r'$\bar{p}$ (bar)', color='red')
+ax2.tick_params('y', colors='red')
+ax2.set_yticks([0, .5, 1])
+ax2.set_ylim(-.1, 1.1)
+ax2.set_xlim(0, 180)
+ax2.set_xlabel('time (s)')
+ax2.set_xticks([0, 60, 120, 180])
+
+ax1.grid()
+ax1.set_ylabel(r'$\alpha$ ($^\circ$)', color='blue')
+ax1.tick_params('y', colors='blue')
+ax1.set_yticks([0, 50, 100, 150])
+ax1.set_ylim(-15, 175)
+
+kwargs = {
+    'strict': 1,
+    'extra_tikzpicture_parameters': {},
+    'extra_axis_parameters': {'height={3cm}', 'width={9cm}'},
+    'extra_groupstyle_parameters': {'vertical sep={0pt}',
+                                    'x descriptions at=edge bottom'}
+        }
+
+tikzplotlib.save('clb_B01_raw_data.tex', fig, standalone=True, **kwargs)
 
 # %% calc coeffs
 deg = 5
@@ -84,16 +109,26 @@ poly = np.poly1d(coef)
 alp = np.linspace(-20, 180, 100)
 
 plt.figure('CLB'+str(filename))
-plt.plot(alpha, pref, ':', label='measurements')
-plt.plot(alpha_mean, pref_mean, 'o', label='used measurements')
-plt.plot(alp, poly(alp), '-x', label='fitted')
+plt.plot(alpha, pref, ':', label='measurements', color='blue')
+plt.plot(alpha_mean, pref_mean, 'o', label='used measurements', color='orange')
+plt.plot(alp, poly(alp), '-', label='polynomial fit', color='green')
 
 plt.grid()
 plt.xlim((-20, 180))
+plt.xticks([0, 50, 100, 150])
+plt.yticks([0, .5, 1])
 plt.ylim((-.1, 1.3))
 plt.xlabel(r'bending angle $\alpha$ ($^\circ$)')
-plt.ylabel(r'pressure $p$ (bar)')
+plt.ylabel(r'$\bar{p}$ (bar)')
 plt.legend(loc='lower right')
+
+kwargs = {
+    'strict': 1,
+    'extra_tikzpicture_parameters': {},
+    'extra_axis_parameters': {'height={7cm}', 'width={9cm}'},
+        }
+
+tikzplotlib.save('clb_B01_eval.tex', standalone=True, **kwargs)
 
 
 #
