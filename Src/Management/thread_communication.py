@@ -45,10 +45,10 @@ class LLCRecorder(Borg):
         Borg.__init__(self)
 
         self.u = {name: 0.0 for name in CHANNELset}
-        self.aIMU = {name: None for name in CHANNELset}
+        self.aIMU = {name: 0. for name in CHANNELset}
 
-        self.acc = {name: None for name in IMUset}
-        self.gyr = {name: None for name in IMUset}
+        self.acc = {name: 0. for name in IMUset}
+        self.gyr = {name: 0. for name in IMUset}
 
 
 llc_rec = LLCRecorder()
