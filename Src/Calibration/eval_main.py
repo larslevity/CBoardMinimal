@@ -11,6 +11,20 @@ import tikzplotlib
 
 import load as my_load
 
+
+class LP1(object):
+    def __init__(self, Ts, gamma=.07):
+        self.a = (1-2*gamma/Ts)/(1+2*gamma/Ts)
+        self.b = 1/(1+2*gamma/Ts)
+        self.lastout = 0
+        self.lastin = 0
+    
+    def filt(self, x):
+        self.lastout = -self.a*self.lastout + self.b*(self.lastin + x)
+        self.lastin = x
+        return self.lastout
+
+
 # %% LOAD
 filename = 'clb_B01.csv'
 data = my_load.read_csv(filename)
@@ -43,6 +57,14 @@ jdx = np.zeros(np.shape(idx))
 alpha_mean = []
 pref_mean = []
 time_mean = []
+alpha_filt = []
+
+Ts = time[-1]/len(time)
+lp = LP1(Ts)
+
+for alp in alpha:
+    alpha_filt.append(lp.filt(alp))
+
 for i, val in enumerate(idx):
     if val == 1:
         jdx[i-n:i] = np.ones((n))
@@ -66,11 +88,19 @@ plt.grid()
 
 
 
-fig, (ax1, ax2) = plt.subplots(nrows=2, sharex=True,
+
+# %%
+
+fig, ((ax1, ax3), (ax2, ax4)) = plt.subplots(nrows=2, ncols=2, sharex='col',
          gridspec_kw={'height_ratios': [3, 1]})
 
-ax1.plot(time, alpha, color='blue')
+#ax1.plot(time, alpha, color='blue')
+ax1.plot(time, alpha_filt, color='blue')
 ax2.plot(time, pref, color='red')
+
+#ax1.plot(time_mean, alpha_mean, 'o', label='used measurements', color='orange', alpha=.4)
+#ax2.plot(time_mean, pref_mean, 'o', label='used measurements', color='orange', alpha=.4)
+
 
 ax2.grid()
 ax2.set_ylabel(r'$\bar{p}$ (bar)', color='red')
@@ -86,16 +116,40 @@ ax1.set_ylabel(r'$\alpha$ ($^\circ$)', color='blue')
 ax1.tick_params('y', colors='blue')
 ax1.set_yticks([0, 50, 100, 150])
 ax1.set_ylim(-15, 175)
+ax1.set_xlim(0, 180)
+#ax1.set_xticks([])
+
+
+## zoom
+start, end = 0, -1
+ax3.plot(time[start:end], alpha_filt[start:end], color='blue')
+ax4.plot(time[start:end], pref[start:end], color='red')
+
+ax3.plot(time_mean, alpha_mean, 'o', label='used measurements', color='orange', alpha=.7)
+ax4.plot(time_mean, pref_mean, 'o', label='used measurements', color='orange', alpha=.7)
+
+ax3.set_xlim(160, 174)
+ax3.set_ylim(105, 140)
+ax4.set_ylim(.9, 1.01)
+ax3.set_yticks([110, 120, 130])
+
+ax4.grid()
+ax4.tick_params('y', colors='red')
+ax4.set_xlabel('time (s)')
+
+ax3.grid()
+ax3.tick_params('y', colors='blue')
+
 
 kwargs = {
     'strict': 1,
     'extra_tikzpicture_parameters': {},
-    'extra_axis_parameters': {'height={3cm}', 'width={9cm}'},
-    'extra_groupstyle_parameters': {'vertical sep={0pt}',
+    'extra_axis_parameters': {'height={5cm}', 'width={5cm}'},
+    'extra_groupstyle_parameters': {'vertical sep={5pt}',
                                     'x descriptions at=edge bottom'}
         }
 
-tikzplotlib.save('clb_B01_raw_data.tex', fig, standalone=True, **kwargs)
+tikzplotlib.save('clb_B01_raw_data_mod.tex', fig, standalone=True, **kwargs)
 
 # %% calc coeffs
 deg = 5
