@@ -12,6 +12,9 @@ float output_pressure_sensor, output_min = 1638, output_max = 14745; float press
 
 // PID
 const double Kp=.6, Ki=.05, Kd=0.01;
+// Ti = Kp/Ki = .6/0.05 = 12
+// Td = Kd/Kp = 0.01/.6 = 0.0167
+
 // const double Kp=.6, Ki=.7, Kd=0.005;
 const double max_output=.99, gam=.1, tsampling=10; double integral=0, last_err=0, last_out=0, windup_guard=0; double err, diff, integ, controller_output, u, u_ctr;
 
